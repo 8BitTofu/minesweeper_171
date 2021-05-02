@@ -16,6 +16,8 @@ from AI import AI
 from Action import Action
 
 import numpy as np
+import queue
+
 
 
 class MyAI( AI ):
@@ -28,9 +30,20 @@ class MyAI( AI ):
 
 		# Instantiate an array representation of the board
 		self.msBoard = Board(rowDimension, colDimension, totalMines, startX, startY)
-		self.coveredTiles = rowDimension*colDimension
-		self.totalTimeElapsed = 0.0
+		self.rowDimension = rowDimension # y-value
+		self.colDimension = colDimension # x-value
 
+		self.coveredTiles:int = rowDimension*colDimension
+		self.totalTimeElapsed:float = 0.0
+		self.totalMines:int = totalMines
+		
+
+		# Instantiate action queue
+		self.actionQueue = queue.Queue()
+
+		# Instantiate discovered / uncovered set
+		self.uncoveredTiles = set()
+		self.numFlags:int = 0
 
 		# Make initial first move on board
 		self.currentAction = Action(AI.Action.UNCOVER, startX, startY)
@@ -60,6 +73,40 @@ class MyAI( AI ):
 			numCoveredNeighbors = 8
 			tileLabel = -1 ## tile number (i.e. 0-8)
 			# effectiveLabel = tileLabel - numFlaggedNeighbors
+
+			if (number != -1):
+				prevMoveX = self.currentAction.getX()
+				prevMoveY = self.currentAction.getY()
+				prevMoveAction = self.currentAction.getMove()
+
+				# basic case: 0 tile
+				if (prevMoveAction == "UNCOVER"):
+					self.uncoveredTiles.add((prevMoveX, prevMoveY))
+					self.coveredTiles -= 1
+
+					if (number == 0):
+						# check surrounding neighbors to uncover if covered
+						for i in range(-1,2):
+							for j in range(-1,2):
+								if (self.validBounds(prevMoveX + i, prevMoveY + j)) and
+								(prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles:
+										self.actionQueue.put(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+
+	
+	def validBounds(self, xvalue: int, yvalue: int) -> bool:
+		''' return boolean to check if tile is within board boundaries'''
+		if (xvalue <= self.colDimension) and (xvalue > 0) and (yvalue <= self.rowDimension) and (yvalue > 0):
+			return True
+		else:
+			return False
+
+
+					
+
+
+
+
+
 
 			# RULE OF THUMBS NOTES
 			# 1) if effectiveLabel == numCoveredNeighbors: 
@@ -108,9 +155,17 @@ class Board:
 		# 1-8 : number of bombs in neighborhood
 
 		self.uncoveredTileRange = set(range(-2, 8))
-
-		self.board = np.full((rowDimension, colDimension), fill_value = 0)
+ 
+		# create fully covered board
+		self.board = np.full((colDimension, rowDimension), fill_value = -1)
 		self.totalMines = totalMines
+
+		self.board[startX, startY] = 0
+
+
+	def updateBoard(self, positionX, positionY, tileValue):
+		''' pass in action at certain position and update board '''
+		pass
 		
 
 
