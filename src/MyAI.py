@@ -16,7 +16,6 @@ from AI import AI
 from Action import Action
 
 import numpy as np
-import queue
 import collections
 
 # austin's shortcut notes:
@@ -55,9 +54,6 @@ class MyAI( AI ):
 		# Make initial first move on board
 		self.currentAction = Action(AI.Action.UNCOVER, startX, startY)
 		self.coveredTiles -= 1
-
-
-
 
 		########################################################################
 		#							YOUR CODE ENDS							   #
@@ -113,8 +109,9 @@ class MyAI( AI ):
 								#print("checkboards: ", self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1, self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j))
 								#self.msBoard.printBoard()
 								if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
-									if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
+									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
 										####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
+										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
 										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 			
 
@@ -125,6 +122,8 @@ class MyAI( AI ):
 						# else, ignore this tile and continue (basically go around this 1 tile and continue until complete)
 						for i in range(-1,2):
 							for j in range(-1,2):
+								if i == 0 and j == 0:
+									continue
 								if (self.validBounds(prevMoveX + i, prevMoveY + j)) == False or self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) != -1:
 									numCoveredNeighbors -= 1
 
@@ -135,8 +134,10 @@ class MyAI( AI ):
 						# if only one covered tile -> flag
 						if (numCoveredNeighbors == 1):
 							if (Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY) not in self.actionQueue):
-								####print("appended: FLAG", prevMoveX + i, prevMoveY + j)
-								self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
+								if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
+									####print("appended: FLAG", prevMoveX + i, prevMoveY + j)
+									self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
+									self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
 				
 
 				# Flag is hardcoded for SuperEasy Worlds #####################################
@@ -148,19 +149,22 @@ class MyAI( AI ):
 						for j in range(-1,2):
 							if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
 								if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
-									####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
-									self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
+										####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
+										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
+										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 
 
 
 			# get latest current action and
 			####print("DEQUE:")
-			####for value in self.actionQueue:
-			####	print(value.getMove(), value.getX(), value.getY())
+			for value in self.actionQueue:
+				print(value.getMove(), value.getX(), value.getY())
 			
 			####self.msBoard.printBoard()	``
 			self.currentAction = self.actionQueue.popleft()
 
+			print("NEXT MOVE: ", self.currentAction.getMove(), self.currentAction.getX(), self.currentAction.getY())
 
 			return self.currentAction
 
