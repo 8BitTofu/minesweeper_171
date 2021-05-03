@@ -17,6 +17,7 @@ from Action import Action
 
 import numpy as np
 import queue
+import collections
 
 # austin's shortcut notes:
 # python src/Main.py -d -f ../WorldGenerator/Problems/
@@ -45,7 +46,7 @@ class MyAI( AI ):
 		# print("col dimension: ", colDimension)
 
 		# Instantiate action queue
-		self.actionQueue = queue.Queue()
+		self.actionQueue = collections.deque()
 
 		# Instantiate discovered / uncovered set
 		self.uncoveredTiles = set()
@@ -88,9 +89,10 @@ class MyAI( AI ):
 				prevMoveY:int = self.currentAction.getY()
 				prevMoveAction:str = self.currentAction.getMove()
 
-				# print("prevMoveAction:", prevMoveAction)
-				# print("prevMoveX:", prevMoveX)
-				# print("prevMoveY:", prevMoveY)
+				print("prevMoveAction:", prevMoveAction)
+				print("prevMoveX:", prevMoveX)
+				print("prevMoveY:", prevMoveY)
+				print("number: ", number)
 
 				if (prevMoveAction == AI.Action.UNCOVER):
 					# add previous tile to uncovered
@@ -98,7 +100,6 @@ class MyAI( AI ):
 					
 					# update board to previous tile
 					self.msBoard.updateBoard(prevMoveX, prevMoveY, number)
-					self.msBoard.printBoard()
 					self.coveredTiles -= 1
 
 					# basic case: 0 tile
@@ -112,8 +113,9 @@ class MyAI( AI ):
 								#print("checkboards: ", self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1, self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j))
 								#self.msBoard.printBoard()
 								if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
-									# print("ADDEDQUEUE for uncover")
-									self.actionQueue.put(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+									if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
+										####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
+										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 			
 
 					# basic case: 1 tile
@@ -127,12 +129,14 @@ class MyAI( AI ):
 									numCoveredNeighbors -= 1
 
 								else:
-									singleUncoveredTileX = prevMoveX + i 
+									singleUncoveredTileX = prevMoveX + i
 									singleUncoveredTileY = prevMoveY + j
 
 						# if only one covered tile -> flag
 						if (numCoveredNeighbors == 1):
-							self.actionQueue.put(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
+							if (Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY) not in self.actionQueue):
+								####print("appended: FLAG", prevMoveX + i, prevMoveY + j)
+								self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
 				
 
 				# Flag is hardcoded for SuperEasy Worlds #####################################
@@ -142,34 +146,36 @@ class MyAI( AI ):
 
 					for i in range(-1,2):
 						for j in range(-1,2):
-							if (self.validBounds(prevMoveX + i, prevMoveY + j)) and (prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles:
-								self.actionQueue.put(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+							if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
+								if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
+									####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
+									self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 
 
 
 			# get latest current action and
-			self.currentAction = self.actionQueue.get()
-			# print("NEXT ACTION (move, x, y): ", self.currentAction.getMove(), self.currentAction.getX(), self.currentAction.getY())
-			# for q_item in self.actionQueue.queue:
-			# 	print(q_item.getMove(), q_item.getX(), q_item.getY())
+			####print("DEQUE:")
+			####for value in self.actionQueue:
+			####	print(value.getMove(), value.getX(), value.getY())
+			
+			####self.msBoard.printBoard()	``
+			self.currentAction = self.actionQueue.popleft()
+
 
 			return self.currentAction
 
 	
 	def validBounds(self, xvalue: int, yvalue: int) -> bool:
 		''' return boolean to check if tile is within board boundaries'''
-		if (xvalue < self.colDimension) and (xvalue >= 0) and (yvalue < self.rowDimension) and (yvalue >= 0):
+		if xvalue in range (0, self.colDimension) and yvalue in range(0, self.rowDimension):
 			return True
 		else:
+			# print("col dimension: ", self.colDimension, " xvalue: ", xvalue)
+			# print("row dimension: ", self.rowDimension, " yvalue: ", yvalue)
 			return False
 
 
 					
-
-
-
-
-
 
 			# RULE OF THUMBS NOTES
 			# 1) if effectiveLabel == numCoveredNeighbors: 
@@ -217,10 +223,10 @@ class Board:
 		# 0 : empty tile with no bombs in neighborhood
 		# 1-8 : number of bombs in neighborhood
 
-		self.uncoveredTileRange = set(range(-2, 8))
+		self.tileStates = set(range(-2, 8))
  
 		# create fully covered board
-		self.board = np.full((colDimension+1, rowDimension+1), fill_value = -1)
+		self.board = np.full((colDimension, rowDimension), fill_value = -1)
 		self.totalMines = totalMines
 
 		self.board[startX, startY] = 0
@@ -238,8 +244,10 @@ class Board:
 	
 	def printBoard(self):
 		''' debugging purposes - print full board '''
-		#print(self.board)
-		pass
+		print(self.board)
+
+
+		
 		
 
 
