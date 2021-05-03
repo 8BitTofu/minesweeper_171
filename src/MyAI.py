@@ -68,7 +68,6 @@ class MyAI( AI ):
 
 		# Check if goal reached
 		if (self.numFlaggedTiles == self.totalMines):
-			# print("coveredTiles == totalMines -> LEAVE")
 			return Action(AI.Action.LEAVE)
 
 		else:
@@ -80,7 +79,6 @@ class MyAI( AI ):
 			# effectiveLabel = tileLabel - numFlaggedNeighbors
 
 			if (number != -1):
-				# print("number != -1")
 				prevMoveX:int = self.currentAction.getX()
 				prevMoveY:int = self.currentAction.getY()
 				prevMoveAction:str = self.currentAction.getMove()
@@ -103,14 +101,8 @@ class MyAI( AI ):
 						# check surrounding neighbors to uncover if covered
 						for i in range(-1,2):
 							for j in range(-1,2):
-								#print("checking: ", i, j)
-								#print(prevMoveX + i, prevMoveY + j)
-								#print("validbounds: ", self.validBounds(prevMoveX + i, prevMoveY + j))
-								#print("checkboards: ", self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1, self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j))
-								#self.msBoard.printBoard()
 								if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
 									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-										####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
 										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
 										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 			
@@ -135,7 +127,6 @@ class MyAI( AI ):
 						if (numCoveredNeighbors == 1):
 							if (Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY) not in self.actionQueue):
 								if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-									####print("appended: FLAG", prevMoveX + i, prevMoveY + j)
 									self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
 									self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
 				
@@ -150,18 +141,16 @@ class MyAI( AI ):
 							if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
 								if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
 									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-										####print("appended: UNCOVER", prevMoveX + i, prevMoveY + j)
 										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
 										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
 
 
 
-			# get latest current action and
-			####print("DEQUE:")
+			# DEBUGGING PRINT
 			for value in self.actionQueue:
 				print(value.getMove(), value.getX(), value.getY())
 			
-			####self.msBoard.printBoard()	``
+			# get next action in queue
 			self.currentAction = self.actionQueue.popleft()
 
 			print("NEXT MOVE: ", self.currentAction.getMove(), self.currentAction.getX(), self.currentAction.getY())
@@ -238,9 +227,7 @@ class Board:
 
 	def updateBoard(self, positionX, positionY, tileValue):
 		''' pass in action at certain position and update board '''
-		# print("updated ", positionX, positionY, tileValue)
 		self.board[positionX, positionY] = tileValue
-		# print(self.board)
 
 	def checkBoard(self, positionX, positionY) -> int:
 		''' return tileValue at position '''
