@@ -66,96 +66,110 @@ class MyAI( AI ):
 		#							YOUR CODE BEGINS						   #
 		########################################################################
 
+		# Specific Tile Definitions
+		numFlaggedNeighbors:int = 0
+		numCoveredNeighbors:int = 8
+		singleUncoveredTileX:int = -1
+		singleUncoveredTileY:int = -1
+		# effectiveLabel = tileLabel - numFlaggedNeighbors
+
+		
+		prevMoveX:int = self.currentAction.getX()
+		prevMoveY:int = self.currentAction.getY()
+		prevMoveAction:str = self.currentAction.getMove()
+
+		# print("prevMoveAction:", prevMoveAction)
+		# print("prevMoveX:", prevMoveX)
+		# print("prevMoveY:", prevMoveY)
+		# print("number: ", number)
+
+		if (prevMoveAction == AI.Action.FLAG):
+			self.numFlaggedTiles += 1
+
 		# Check if goal reached
 		if (self.numFlaggedTiles == self.totalMines):
 			return Action(AI.Action.LEAVE)
 
-		else:
-			# Specific Tile Definitions
-			numFlaggedNeighbors:int = 0
-			numCoveredNeighbors:int = 8
-			singleUncoveredTileX:int = -1
-			singleUncoveredTileY:int = -1
-			# effectiveLabel = tileLabel - numFlaggedNeighbors
-
-			if (number != -1):
-				prevMoveX:int = self.currentAction.getX()
-				prevMoveY:int = self.currentAction.getY()
-				prevMoveAction:str = self.currentAction.getMove()
-
-				print("prevMoveAction:", prevMoveAction)
-				print("prevMoveX:", prevMoveX)
-				print("prevMoveY:", prevMoveY)
-				print("number: ", number)
-
-				if (prevMoveAction == AI.Action.UNCOVER):
-					# add previous tile to uncovered
-					self.uncoveredTiles.add((prevMoveX, prevMoveY))
-					
-					# update board to previous tile
-					self.msBoard.updateBoard(prevMoveX, prevMoveY, number)
-					self.coveredTiles -= 1
-
-					# basic case: 0 tile
-					if (number == 0):
-						# check surrounding neighbors to uncover if covered
-						for i in range(-1,2):
-							for j in range(-1,2):
-								if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
-									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
-										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+		if (prevMoveAction == AI.Action.UNCOVER):
+			# add previous tile to uncovered
+			self.uncoveredTiles.add((prevMoveX, prevMoveY))
 			
+			# update board to previous tile
+			self.msBoard.updateBoard(prevMoveX, prevMoveY, number)
+			self.coveredTiles -= 1
 
-					# basic case: 1 tile
-					if (number == 1):
-						# check surrounding neighbors to see whats covered
-						# if only one tile is uncovered -> flag it
-						# else, ignore this tile and continue (basically go around this 1 tile and continue until complete)
-						for i in range(-1,2):
-							for j in range(-1,2):
-								if i == 0 and j == 0:
-									continue
-								if (self.validBounds(prevMoveX + i, prevMoveY + j)) == False or self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) != -1:
-									numCoveredNeighbors -= 1
+			# basic case: 0 tile
+			if (number == 0):
+				# check surrounding neighbors to uncover if covered
+				for i in range(-1,2):
+					for j in range(-1,2):
+						if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
+							if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
+								self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
+								self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+	
 
-								else:
-									singleUncoveredTileX = prevMoveX + i
-									singleUncoveredTileY = prevMoveY + j
+			# basic case: 1 tile
+			if (number == 1):
+				# check surrounding neighbors to see whats covered
+				# if only one tile is uncovered -> flag it
+				# else, ignore this tile and continue (basically go around this 1 tile and continue until complete)
+				for i in range(-1,2):
+					for j in range(-1,2):
+						if i == 0 and j == 0:
+							continue
+						if (self.validBounds(prevMoveX + i, prevMoveY + j)) == False or self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) != -1:
+							numCoveredNeighbors -= 1
 
-						# if only one covered tile -> flag
-						if (numCoveredNeighbors == 1):
-							if (Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY) not in self.actionQueue):
-								if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-									self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
-									self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
-				
+						else:
+							singleUncoveredTileX = prevMoveX + i
+							singleUncoveredTileY = prevMoveY + j
 
-				# Flag is hardcoded for SuperEasy Worlds #####################################
-				if (prevMoveAction == AI.Action.FLAG):
-					self.msBoard.updateBoard(prevMoveX, prevMoveY, number)
-					self.numFlaggedTiles += 1
+				# if only one covered tile -> flag
+				if (numCoveredNeighbors == 1):
+					if (Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY) not in self.actionQueue):
+						if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
+							self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
+							self.actionQueue.append(Action(AI.Action.FLAG, singleUncoveredTileX, singleUncoveredTileY))
+		
 
-					for i in range(-1,2):
-						for j in range(-1,2):
-							if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
-								if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
-									if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
-										self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
-										self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+		# if action queue is empty, recheck
+		if len(self.actionQueue) == 0:
+			# find remaining covered tile
+			coveredCoords:tuple = self.msBoard.findCoveredTile()
 
+			# HARD CODED FOR SUPEREASY: remaining tile should be the bomb
+			self.actionQueue.append(Action(AI.Action.FLAG, coveredCoords[0], coveredCoords[1]))
 
 
-			# DEBUGGING PRINT
-			for value in self.actionQueue:
-				print(value.getMove(), value.getX(), value.getY())
-			
-			# get next action in queue
-			self.currentAction = self.actionQueue.popleft()
 
-			print("NEXT MOVE: ", self.currentAction.getMove(), self.currentAction.getX(), self.currentAction.getY())
 
-			return self.currentAction
+
+		# Flag is hardcoded for SuperEasy Worlds #####################################
+		# elif (prevMoveAction == AI.Action.FLAG):
+		# 	self.msBoard.updateBoard(prevMoveX, prevMoveY, number)
+		# 	self.numFlaggedTiles += 1
+
+		# 	for i in range(-1,2):
+		# 		for j in range(-1,2):
+		# 			if (self.validBounds(prevMoveX + i, prevMoveY + j)) and self.msBoard.checkBoard(prevMoveX + i, prevMoveY + j) == -1:
+		# 				if (Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j) not in self.actionQueue):
+		# 					if ((prevMoveX + i, prevMoveY + j) not in self.uncoveredTiles):
+		# 						self.uncoveredTiles.add((prevMoveX + i, prevMoveY + j))
+		# 						self.actionQueue.append(Action(AI.Action.UNCOVER, prevMoveX + i, prevMoveY + j))
+
+
+
+		# DEBUGGING PRINT
+		# for value in self.actionQueue:
+		# 	print(value.getMove(), value.getX(), value.getY())
+		
+		# get next action in queue
+		self.currentAction = self.actionQueue.popleft()
+
+		# print("NEXT MOVE: ", self.currentAction.getMove(), self.currentAction.getX(), self.currentAction.getY())
+
+		return self.currentAction
 
 	
 	def validBounds(self, xvalue: int, yvalue: int) -> bool:
@@ -209,6 +223,8 @@ class Board:
 
 	def __init__(self, rowDimension, colDimension, totalMines, startX, startY):
 		# Simulate the board with an array
+		self.colDimension = colDimension
+		self.rowDimension = rowDimension
 
 		# Board States: 
 		# -2 : flagged
@@ -236,6 +252,17 @@ class Board:
 	def printBoard(self):
 		''' debugging purposes - print full board '''
 		print(self.board)
+
+	def findCoveredTile(self) -> tuple:
+		''' find a random covered tile on the board and return tuple of coordinates'''
+		for row in range(0, self.colDimension):
+			for col in range(0, self.rowDimension):
+				if self.board[row, col] == -1:
+					return (row, col)
+		
+		# if no covered tiles found
+		# this should never happen
+		return (-1, -1)
 
 
 		
